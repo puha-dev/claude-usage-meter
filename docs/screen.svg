@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 280 280" width="400" height="400" font-family="Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <!-- Mockup of the 240x240 GC9A01A screen; coordinates match the LVGL layout in claude-usage-meter.yaml -->
+  <defs>
+    <radialGradient id="bezel" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#4a4a52"/>
+      <stop offset="100%" stop-color="#18181c"/>
+    </radialGradient>
+    <clipPath id="screen"><circle cx="120" cy="120" r="120"/></clipPath>
+  </defs>
+
+  <!-- Device bezel -->
+  <circle cx="120" cy="120" r="138" fill="url(#bezel)"/>
+  <circle cx="120" cy="120" r="122" fill="#0b0b0f"/>
+
+  <g clip-path="url(#screen)">
+    <circle cx="120" cy="120" r="120" fill="#1E1E2E"/>
+
+    <!-- Limit arcs: 135° -> 45° clockwise; outer = session (42%), inner = weekly (28%) -->
+    <g fill="none" stroke-width="9" stroke-linecap="round">
+      <path d="M 39.74 200.26 A 113.5 113.5 0 1 1 200.26 200.26" stroke="#313244"/>
+      <path d="M 39.74 200.26 A 113.5 113.5 0 0 1 78.22 14.47" stroke="#89B4FA"/>
+      <path d="M 48.94 191.06 A 100.5 100.5 0 1 1 191.06 191.06" stroke="#313244"/>
+      <path d="M 48.94 191.06 A 100.5 100.5 0 0 1 33.50 68.85" stroke="#CBA6F7"/>
+    </g>
+
+    <!-- Weather: sun icon + temperature -->
+    <g transform="translate(102 47)" fill="#F9E2AF" stroke="#F9E2AF" stroke-width="2" stroke-linecap="round">
+      <circle r="5" stroke="none"/>
+      <path d="M0 -8.5V-11 M0 8.5V11 M-8.5 0H-11 M8.5 0H11 M6 -6L7.8 -7.8 M-6 6L-7.8 7.8 M6 6L7.8 7.8 M-6 -6L-7.8 -7.8"/>
+    </g>
+    <text x="136" y="48" font-size="16" fill="#CDD6F4" text-anchor="middle" dominant-baseline="central">14°</text>
+
+    <!-- Clock and date -->
+    <text x="120" y="82" font-size="52" font-weight="300" fill="#CDD6F4" text-anchor="middle" dominant-baseline="central">14:37</text>
+    <text x="120" y="115" font-size="13" font-weight="500" fill="#6C7086" text-anchor="middle" dominant-baseline="central">czw 15 paź</text>
+
+    <!-- Usage columns -->
+    <g font-size="13" font-weight="500" text-anchor="middle" dominant-baseline="central">
+      <text x="84" y="136" fill="#89B4FA">SESJA 5H</text>
+      <text x="156" y="136" fill="#CBA6F7">TYDZIEŃ</text>
+      <text x="84" y="182" fill="#89B4FA">2h 05m</text>
+      <text x="156" y="182" fill="#CBA6F7">3d 14h</text>
+    </g>
+    <g font-size="28" font-weight="700" fill="#CDD6F4" text-anchor="middle" dominant-baseline="central">
+      <text x="84" y="158">42%</text>
+      <text x="156" y="158">28%</text>
+    </g>
+
+    <!-- Clawd (18x5 grid, 3x6 px per pixel) -->
+    <g fill="#D97757">
+      <rect x="102" y="199" width="36" height="6"/>
+      <rect x="102" y="205" width="6" height="6"/>
+      <rect x="111" y="205" width="18" height="6"/>
+      <rect x="132" y="205" width="6" height="6"/>
+      <rect x="96" y="211" width="48" height="6"/>
+      <rect x="102" y="217" width="36" height="6"/>
+      <rect x="105" y="223" width="3" height="6"/>
+      <rect x="111" y="223" width="3" height="6"/>
+      <rect x="126" y="223" width="3" height="6"/>
+      <rect x="132" y="223" width="3" height="6"/>
+    </g>
+  </g>
+</svg>
