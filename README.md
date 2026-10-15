@@ -2,7 +2,12 @@
 
 ESPHome firmware that turns a **Spotpear "Xiaozhi AI Ball"** (ESP32-S3 with a 1.28" round GC9A01A screen) into a desk gauge for your **Claude usage limits**, with data coming from Home Assistant.
 
-<p align="center"><img src="docs/screen.svg" width="320" alt="Screen mockup: session and weekly usage arcs, clock, weather and Clawd"></p>
+<p align="center">
+  <img src="docs/device.png" width="300" alt="The meter running on the Spotpear Xiaozhi Ball">
+  &nbsp;&nbsp;
+  <img src="docs/screen.svg" width="300" alt="Screen mockup: session and weekly usage arcs, clock, weather and Clawd">
+</p>
+<p align="center"><sub>Left: the real device (photo taken before the labels switched from Polish to English). Right: screen mockup.</sub></p>
 
 - **Outer arc:** 5-hour session usage (blue).
 - **Inner arc:** weekly usage (mauve).
