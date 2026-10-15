@@ -1,0 +1,13 @@
+# Secrets
+secrets.yaml
+
+# ESPHome build output
+.esphome/
+.pioenvs/
+.piolibdeps/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,478 @@
+# Spotpear Xiaozhi Ball (ESP32-S3 N16R8, round GC9A01A 240x240)
+# Pins for hardware revision V2 (the V1 pinout left the screen black).
+# V1: spi_clk 14, spi_mosi 17, lcd_cs 13, lcd_dc 10, lcd_reset 18, backlight 3, backlight_inverted false
+substitutions:
+  # Home Assistant entities (hass-claude-usage sensors are named sensor.<prefix>_session_usage etc.)
+  claude_prefix: claude_usage_dawid_pro
+  weather_entity: weather.forecast_dom
+  # Display
+  spi_clk: "4"
+  spi_mosi: "2"
+  lcd_cs: "5"
+  lcd_dc: "47"
+  lcd_reset: "38"
+  backlight: "42"
+  backlight_inverted: "true"
+  # Audio V2: ES8311 codec (I2C) + I2S, amplifier enabled by GPIO46
+  i2c_sda: "15"
+  i2c_scl: "14"
+  i2s_lrclk: "45"
+  i2s_bclk: "9"
+  i2s_mclk: "16"
+  i2s_dout: "8"
+  amp_enable: "46"
+
+esphome:
+  name: esp32-ball
+  friendly_name: esp32-ball
+  min_version: 2025.5.0
+  includes:
+    - claude_meter.h
+
+esp32:
+  board: esp32-s3-devkitc-1
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  actions:
+    # From HA: esphome.esp32_ball_play_rtttl {song_str: "beep:d=8,o=6,b=180:c"}
+    # Always plays — ignores quiet hours and the "Dźwięki alertów" switch
+    - action: play_rtttl
+      variables:
+        song_str: string
+      then:
+        - rtttl.play:
+            rtttl: !lambda "return song_str;"
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Claude-Meter Fallback Hotspot"
+    password: !secret fallback_ap_password
+
+captive_portal:
+
+# --- TIME (timezone comes from Home Assistant) ---
+time:
+  - platform: homeassistant
+    id: ha_time
+    on_time_sync:
+      then:
+        - script.execute: refresh_time
+    on_time:
+      - seconds: 0
+        then:
+          - script.execute: refresh_time
+
+globals:
+  - id: session_reset
+    type: int64_t
+    initial_value: "0"
+  - id: week_reset
+    type: int64_t
+    initial_value: "0"
+  # Alert level (0 none, 1 = 80%, 2 = 95%) — persisted so the device doesn't beep after a reboot
+  - id: session_alert
+    type: int
+    restore_value: yes
+    initial_value: "0"
+  - id: week_alert
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+script:
+  # Alert sound (ev = claude_meter::EV_*), if enabled and outside quiet hours
+  - id: alert_sound
+    mode: restart
+    parameters:
+      ev: int
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(alert_sounds).state) return false;
+              auto now = id(ha_time).now();
+              return !(now.is_valid() && claude_meter::quiet_hour(now.hour));
+          then:
+            - rtttl.play:
+                rtttl: !lambda "return claude_meter::alert_melody(ev);"
+
+  # Clock, date and reset countdowns — every minute and whenever a reset time changes
+  - id: refresh_time
+    mode: queued
+    then:
+      - lambda: |-
+          auto now = id(ha_time).now();
+          int64_t ts = now.is_valid() ? (int64_t) now.timestamp : 0;
+          if (now.is_valid()) {
+            lv_label_set_text((lv_obj_t *) id(lab_clock), now.strftime("%H:%M").c_str());
+          }
+          lv_label_set_text((lv_obj_t *) id(lab_date), claude_meter::date_pl(ts).c_str());
+          lv_label_set_text((lv_obj_t *) id(lab_session_left), claude_meter::countdown(id(session_reset), ts).c_str());
+          lv_label_set_text((lv_obj_t *) id(lab_week_left), claude_meter::countdown(id(week_reset), ts).c_str());
+
+# --- FONTS ---
+font:
+  # Big digits — only the needed characters, to save flash
+  - file: "gfonts://Roboto@300"
+    id: font_clock
+    size: 52
+    bpp: 4
+    glyphs: "0123456789:-"
+  - file: "gfonts://Roboto@700"
+    id: font_pct
+    size: 28
+    bpp: 4
+    glyphs: "0123456789%-"
+  # Text with Polish characters
+  - file: "gfonts://Roboto@500"
+    id: font_label
+    size: 13
+    bpp: 4
+    glyphsets: [GF_Latin_Core]
+  - file: "gfonts://Roboto"
+    id: font_small
+    size: 16
+    bpp: 4
+    glyphsets: [GF_Latin_Core]
+  # Weather icons (Material Design Icons)
+  - file:
+      type: web
+      url: "https://raw.githubusercontent.com/Templarian/MaterialDesign-Webfont/v7.4.47/fonts/materialdesignicons-webfont.ttf"
+    id: font_icon
+    size: 24
+    bpp: 4
+    glyphs: [
+      "\U000F0599", # weather-sunny
+      "\U000F0594", # weather-night
+      "\U000F0595", # weather-partly-cloudy
+      "\U000F0590", # weather-cloudy
+      "\U000F0591", # weather-fog
+      "\U000F0592", # weather-hail
+      "\U000F0593", # weather-lightning
+      "\U000F067E", # weather-lightning-rainy
+      "\U000F0596", # weather-pouring
+      "\U000F0597", # weather-rainy
+      "\U000F0598", # weather-snowy
+      "\U000F067F", # weather-snowy-rainy
+      "\U000F059D", # weather-windy
+      "\U000F05D6", # alert-circle-outline
+    ]
+
+# --- BACKLIGHT ---
+output:
+  - platform: ledc
+    pin: ${backlight}
+    inverted: ${backlight_inverted}
+    id: backlight_pwm
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    name: "Podświetlenie"
+    restore_mode: ALWAYS_ON
+
+# --- SPI ---
+spi:
+  clk_pin: ${spi_clk}
+  mosi_pin: ${spi_mosi}
+
+# --- SPEAKER (ES8311 + I2S) ---
+i2c:
+  sda: ${i2c_sda}
+  scl: ${i2c_scl}
+
+i2s_audio:
+  - id: i2s_out
+    i2s_lrclk_pin: ${i2s_lrclk}
+    i2s_bclk_pin: ${i2s_bclk}
+    i2s_mclk_pin: ${i2s_mclk}
+
+audio_dac:
+  - platform: es8311
+    id: es8311_dac
+    bits_per_sample: 16bit
+    sample_rate: 16000
+
+# 16 kHz like the codec — rtttl writes straight to the speaker (no resampler)
+speaker:
+  - platform: i2s_audio
+    id: speaker_out
+    i2s_audio_id: i2s_out
+    dac_type: external
+    i2s_dout_pin: ${i2s_dout}
+    audio_dac: es8311_dac
+    sample_rate: 16000
+    bits_per_sample: 16bit
+    channel: mono
+
+rtttl:
+  id: buzzer
+  speaker: speaker_out
+  gain: 0.6
+
+switch:
+  # Speaker amplifier
+  - platform: gpio
+    id: amp_power
+    pin: ${amp_enable}
+    restore_mode: RESTORE_DEFAULT_ON
+    internal: true
+  # HA switch — threshold alerts and the renewal melody
+  - platform: template
+    id: alert_sounds
+    name: "Dźwięki alertów"
+    icon: "mdi:volume-high"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+
+# --- SENSORS FROM HOME ASSISTANT ---
+sensor:
+  - platform: homeassistant
+    id: session_usage
+    entity_id: sensor.${claude_prefix}_session_usage
+    on_value:
+      then:
+        - lambda: |-
+            claude_meter::show_usage((lv_obj_t *) id(lab_session_pct), (lv_obj_t *) id(arc_session), x, 0x89B4FA);
+            int ev = claude_meter::alert_step(x, id(session_alert), true);
+            if (ev != claude_meter::EV_NONE) id(alert_sound).execute(ev);
+
+  - platform: homeassistant
+    id: week_usage
+    entity_id: sensor.${claude_prefix}_week_usage
+    on_value:
+      then:
+        - lambda: |-
+            claude_meter::show_usage((lv_obj_t *) id(lab_week_pct), (lv_obj_t *) id(arc_week), x, 0xCBA6F7);
+            int ev = claude_meter::alert_step(x, id(week_alert), false);
+            if (ev != claude_meter::EV_NONE) id(alert_sound).execute(ev);
+
+  - platform: homeassistant
+    id: weather_temp
+    entity_id: ${weather_entity}
+    attribute: temperature
+    on_value:
+      then:
+        - lambda: |-
+            char buf[12];
+            if (std::isnan(x)) snprintf(buf, sizeof(buf), "--");
+            else snprintf(buf, sizeof(buf), "%.0f°", x);
+            lv_label_set_text((lv_obj_t *) id(lab_temp), buf);
+
+text_sensor:
+  - platform: homeassistant
+    id: session_reset_txt
+    entity_id: sensor.${claude_prefix}_session_reset_time
+    on_value:
+      then:
+        - globals.set:
+            id: session_reset
+            value: !lambda "return claude_meter::parse_iso(x);"
+        - script.execute: refresh_time
+
+  - platform: homeassistant
+    id: week_reset_txt
+    entity_id: sensor.${claude_prefix}_weekly_reset_time
+    on_value:
+      then:
+        - globals.set:
+            id: week_reset
+            value: !lambda "return claude_meter::parse_iso(x);"
+        - script.execute: refresh_time
+
+  - platform: homeassistant
+    id: weather_state
+    entity_id: ${weather_entity}
+    on_value:
+      then:
+        - lambda: |-
+            lv_label_set_text((lv_obj_t *) id(lab_weather_icon), claude_meter::weather_icon(x));
+
+# --- DISPLAY ---
+display:
+  - platform: mipi_spi
+    id: my_display
+    model: GC9A01A
+    cs_pin: ${lcd_cs}
+    dc_pin: ${lcd_dc}
+    reset_pin: ${lcd_reset}
+    invert_colors: true
+    update_interval: never
+
+# --- LVGL ---
+# Round 240x240 screen: outer arc = 5h session (blue), inner arc = weekly (mauve).
+# The arcs leave a gap at the bottom (135° -> 45°) that holds the Clawd mascot.
+lvgl:
+  displays:
+    - my_display
+  bg_color: 0x1E1E2E
+
+  widgets:
+    # ==================== LIMIT ARCS ====================
+    - arc:
+        id: arc_session
+        align: CENTER
+        width: 236
+        height: 236
+        start_angle: 135
+        end_angle: 45
+        min_value: 0
+        max_value: 100
+        value: 0
+        adjustable: false
+        arc_width: 9
+        arc_color: 0x313244
+        indicator:
+          arc_width: 9
+          arc_color: 0x89B4FA
+
+    - arc:
+        id: arc_week
+        align: CENTER
+        width: 210
+        height: 210
+        start_angle: 135
+        end_angle: 45
+        min_value: 0
+        max_value: 100
+        value: 0
+        adjustable: false
+        arc_width: 9
+        arc_color: 0x313244
+        indicator:
+          arc_width: 9
+          arc_color: 0xCBA6F7
+
+    # ==================== WEATHER (top) ====================
+    - label:
+        id: lab_weather_icon
+        align: CENTER
+        x: -18
+        y: -73
+        text: "\U000F05D6"
+        text_font: font_icon
+        text_color: 0xF9E2AF
+
+    - label:
+        id: lab_temp
+        align: CENTER
+        x: 16
+        y: -72
+        text: "--"
+        text_font: font_small
+        text_color: 0xCDD6F4
+
+    # ==================== CLOCK ====================
+    - label:
+        id: lab_clock
+        align: CENTER
+        y: -38
+        text: "--:--"
+        text_font: font_clock
+        text_color: 0xCDD6F4
+
+    - label:
+        id: lab_date
+        align: CENTER
+        y: -5
+        text: ""
+        text_font: font_label
+        text_color: 0x6C7086
+
+    # ==================== CLAUDE USAGE: CAPTIONS, PERCENTAGES, COUNTDOWNS ====================
+    - label:
+        align: CENTER
+        x: -36
+        y: 16
+        text: "SESJA 5H"
+        text_font: font_label
+        text_color: 0x89B4FA
+
+    - label:
+        align: CENTER
+        x: 36
+        y: 16
+        text: "TYDZIEŃ"
+        text_font: font_label
+        text_color: 0xCBA6F7
+
+    - label:
+        id: lab_session_pct
+        align: CENTER
+        x: -36
+        y: 38
+        text: "--"
+        text_font: font_pct
+        text_color: 0xCDD6F4
+
+    - label:
+        id: lab_week_pct
+        align: CENTER
+        x: 36
+        y: 38
+        text: "--"
+        text_font: font_pct
+        text_color: 0xCDD6F4
+
+    - label:
+        id: lab_session_left
+        align: CENTER
+        x: -36
+        y: 62
+        text: "--"
+        text_font: font_label
+        text_color: 0x89B4FA
+
+    - label:
+        id: lab_week_left
+        align: CENTER
+        x: 36
+        y: 62
+        text: "--"
+        text_font: font_label
+        text_color: 0xCBA6F7
+
+    # ==================== CLAWD (in the bottom gap of the arcs) ====================
+    # Pixel-art Claude Code mascot: 18x5 grid, 3x6 px per pixel (like terminal cells)
+    - obj:
+        align: CENTER
+        y: 94
+        width: 54
+        height: 30
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        scrollbar_mode: "OFF"
+        widgets:
+          # row 0: head
+          - obj: {x: 9, y: 0, width: 36, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          # row 1: eyes (gaps in columns 5 and 12)
+          - obj: {x: 9, y: 6, width: 6, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          - obj: {x: 18, y: 6, width: 18, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          - obj: {x: 39, y: 6, width: 6, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          # row 2: body with arms
+          - obj: {x: 3, y: 12, width: 48, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          # row 3: lower body
+          - obj: {x: 9, y: 18, width: 36, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          # row 4: legs
+          - obj: {x: 12, y: 24, width: 3, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          - obj: {x: 18, y: 24, width: 3, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          - obj: {x: 33, y: 24, width: 3, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
+          - obj: {x: 39, y: 24, width: 3, height: 6, bg_color: 0xD97757, border_width: 0, radius: 0}
