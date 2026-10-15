@@ -44,13 +44,13 @@ inline int64_t parse_iso(const std::string &s) {
   return t;
 }
 
-// Time until reset: "2h 05m", "1d 14h", "teraz" (now)
+// Time until reset: "2h 05m", "1d 14h", "now"
 inline std::string countdown(int64_t target, int64_t now) {
   if (target <= 0 || now < 1000000000)
     return "--";
   int64_t left = target - now;
   if (left <= 0)
-    return "teraz";
+    return "now";
   int d = left / 86400, h = (left % 86400) / 3600, m = (left % 3600) / 60;
   char buf[24];
   if (d > 0)
@@ -60,13 +60,13 @@ inline std::string countdown(int64_t target, int64_t now) {
   return buf;
 }
 
-// Polish short date, e.g. "czw 15 paź"
-inline std::string date_pl(int64_t now) {
+// Short date, e.g. "Thu 15 Oct"
+inline std::string date_short(int64_t now) {
   if (now < 1000000000)
     return "";
-  static const char *days[] = {"nd", "pon", "wt", "śr", "czw", "pt", "sob"};
-  static const char *months[] = {"sty", "lut", "mar", "kwi", "maj", "cze",
-                                 "lip", "sie", "wrz", "paź", "lis", "gru"};
+  static const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+  static const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   time_t tt = static_cast<time_t>(now);
   struct tm tm;
   localtime_r(&tt, &tm);

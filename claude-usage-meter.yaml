@@ -123,7 +123,7 @@ script:
           if (now.is_valid()) {
             lv_label_set_text((lv_obj_t *) id(lab_clock), now.strftime("%H:%M").c_str());
           }
-          lv_label_set_text((lv_obj_t *) id(lab_date), claude_meter::date_pl(ts).c_str());
+          lv_label_set_text((lv_obj_t *) id(lab_date), claude_meter::date_short(ts).c_str());
           lv_label_set_text((lv_obj_t *) id(lab_session_left), claude_meter::countdown(id(session_reset), ts).c_str());
           lv_label_set_text((lv_obj_t *) id(lab_week_left), claude_meter::countdown(id(week_reset), ts).c_str());
 
@@ -140,7 +140,7 @@ font:
     size: 28
     bpp: 4
     glyphs: "0123456789%-"
-  # Text with Polish characters
+  # Text (Latin incl. diacritics)
   - file: "gfonts://Roboto@500"
     id: font_label
     size: 13
@@ -401,7 +401,7 @@ lvgl:
         align: CENTER
         x: -36
         y: 16
-        text: "SESJA 5H"
+        text: "SESSION"
         text_font: font_label
         text_color: 0x89B4FA
 
@@ -409,7 +409,7 @@ lvgl:
         align: CENTER
         x: 36
         y: 16
-        text: "TYDZIEŃ"
+        text: "WEEKLY"
         text_font: font_label
         text_color: 0xCBA6F7
 

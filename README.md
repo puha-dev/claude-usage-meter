@@ -15,7 +15,7 @@ ESPHome firmware that turns a **Spotpear "Xiaozhi AI Ball"** (ESP32-S3 with a 1.
   - a short melody when the session limit renews;
   - quiet hours 23:00–07:00 and an on/off switch in HA.
 
-On-screen text (captions, dates, entity names) is in Polish. Colors follow [Catppuccin Mocha](https://catppuccin.com/palette).
+On-screen text is in English; the two Home Assistant entity names ("Podświetlenie" = backlight, "Dźwięki alertów" = alert sounds) are Polish. Colors follow [Catppuccin Mocha](https://catppuccin.com/palette).
 
 ## Hardware
 
@@ -78,5 +78,5 @@ data:
 | File | Purpose |
 |---|---|
 | `claude-usage-meter.yaml` | Main ESPHome config: hardware, HA sensors, LVGL layout, audio |
-| `claude_meter.h` | C++ helpers: ISO 8601 parsing, countdowns, Polish dates, colors, weather icons, alert logic |
+| `claude_meter.h` | C++ helpers: ISO 8601 parsing, countdowns, dates, colors, weather icons, alert logic |
 | `secrets.yaml.example` | Template for the secrets the config expects |
