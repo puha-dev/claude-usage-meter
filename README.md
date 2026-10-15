@@ -85,3 +85,7 @@ data:
 | `claude-usage-meter.yaml` | Main ESPHome config: hardware, HA sensors, LVGL layout, audio |
 | `claude_meter.h` | C++ helpers: ISO 8601 parsing, countdowns, dates, colors, weather icons, alert logic |
 | `secrets.yaml.example` | Template for the secrets the config expects |
+
+## License
+
+[MIT](LICENSE)
