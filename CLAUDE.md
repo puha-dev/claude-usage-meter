@@ -12,7 +12,7 @@ ESPHome firmware configs for a Spotpear "Xiaozhi AI Ball" bought on AliExpress (
 
 - ESP32-S3 (QFN56) N16R8: 16 MB flash, 8 MB octal PSRAM. Board `esp32-s3-devkitc-1`, ESP-IDF.
 - Display: GC9A01A round 240x240 via `mipi_spi`, `invert_colors: true`.
-- Pinout is set via `substitutions:` at the top of the YAML. Currently set to Ball **V2** (SPI CLK 4, MOSI 2, CS 5, DC 47, RST 38, backlight GPIO42 inverted). V2 is confirmed working on this unit; the V1 pinout (CLK 14, MOSI 17, CS 13, DC 10, RST 18, backlight GPIO3) left the screen black. Only one back button is usable (BOOT, GPIO0, active-low, strapping pin). Speaker: ES8311 codec on I2C (SDA 15, SCL 14), I2S LRCLK 45 / BCLK 9 / MCLK 16 / DOUT 8, amp enable GPIO46 (pins also in `substitutions:`). Source: github.com/RealDeco/xiaozhi-esphome (`devices/Spotpear Balls`, `devices/Under_Development/Modular/HW/ball_v*_hw.yaml`).
+- Pinout is set via `substitutions:` at the top of the YAML. Currently set to Ball **V2** (SPI CLK 4, MOSI 2, CS 5, DC 47, RST 38, backlight GPIO42 inverted). V2 is confirmed working on this unit; the V1 pinout (CLK 14, MOSI 17, CS 13, DC 10, RST 18, backlight GPIO3) left the screen black. Only one back button is usable (BOOT, GPIO0, active-low, strapping pin). Speaker: ES8311 codec on I2C (SDA 15, SCL 14), I2S LRCLK 45 / BCLK 9 / MCLK 16 / DOUT 8, amp enable GPIO46 (pins also in `substitutions:`). RGB LED: single WS2812 on GPIO48 (GRB), exposed to HA as light "RGB LED" — nothing in the firmware drives it, it is only for HA automations. Source: github.com/RealDeco/xiaozhi-esphome (`devices/Spotpear Balls`, `devices/Under_Development/Modular/HW/ball_v*_hw.yaml`).
 
 ## Commands
 

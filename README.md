@@ -19,6 +19,7 @@ ESPHome firmware that turns a **Spotpear "Xiaozhi AI Ball"** (ESP32-S3 with a 1.
   - one beep at 80%, a triple beep at 95%;
   - a short melody when the session limit renews;
   - quiet hours 23:00–07:00 and an on/off switch in HA.
+- The built-in **RGB LED** is exposed to Home Assistant as a regular light (color, brightness, pulse/strobe/rainbow effects) for your own automations.
 
 On-screen text is in English; the two Home Assistant entity names ("Podświetlenie" = backlight, "Dźwięki alertów" = alert sounds) are Polish. Colors follow [Catppuccin Mocha](https://catppuccin.com/palette).
 
@@ -30,6 +31,7 @@ On-screen text is in English; the two Home Assistant entity names ("Podświetlen
 | MCU | ESP32-S3 N16R8: 16 MB flash, 8 MB octal PSRAM |
 | Display | GC9A01A 240x240 round, SPI: CLK 4, MOSI 2, CS 5, DC 47, RST 38, backlight GPIO42 (inverted) |
 | Audio | ES8311 codec, I2C SDA 15 / SCL 14; I2S LRCLK 45 / BCLK 9 / MCLK 16 / DOUT 8; amp enable GPIO46 |
+| RGB LED | WS2812 (single LED), GPIO48 |
 
 All pins are listed in `substitutions:` at the top of the YAML. The V1 board uses a different display pinout, noted in a comment there. Pin mapping is based on [RealDeco/xiaozhi-esphome](https://github.com/RealDeco/xiaozhi-esphome).
 

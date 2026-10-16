@@ -21,6 +21,8 @@ substitutions:
   i2s_mclk: "16"
   i2s_dout: "8"
   amp_enable: "46"
+  # Addressable RGB LED (single WS2812, same pin on V1 and V2)
+  rgb_led_pin: "48"
 
 esphome:
   name: esp32-ball
@@ -187,6 +189,33 @@ light:
     output: backlight_pwm
     name: "Podświetlenie"
     restore_mode: ALWAYS_ON
+
+  # RGB LED exposed to HA as a regular light, for your own automations
+  - platform: esp32_rmt_led_strip
+    id: rgb_led
+    name: "RGB LED"
+    pin: ${rgb_led_pin}
+    chipset: WS2812
+    num_leds: 1
+    rgb_order: GRB
+    restore_mode: RESTORE_DEFAULT_OFF
+    effects:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 1s
+          update_interval: 1s
+          min_brightness: 20%
+          max_brightness: 100%
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 150ms
+          update_interval: 150ms
+          min_brightness: 20%
+          max_brightness: 100%
+      - strobe:
+          name: "Strobe"
+      - addressable_rainbow:
+          name: "Rainbow"
 
 # --- SPI ---
 spi:
